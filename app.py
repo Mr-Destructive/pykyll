@@ -16,5 +16,8 @@ for file in onlyfiles:
         if not os.path.exists(output_path):
             os.mkdir(output_path)
         title = str(post.get("title", "pykyll-test")) + ".html"
+        
+        with open(Path(output_path) / "index.html", "a") as f:
+            f.write(f"<li><a href='#'>{post.get('title', 'test')}</a></li>")
         with open(Path(output_path) / title, 'w') as f:
             f.write(html_content)
