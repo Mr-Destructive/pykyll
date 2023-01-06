@@ -1,0 +1,17 @@
+[pages]
+site_name = "Techstructive Blog"
+pages_dir = "pages/"
+
+[outputs]
+output_dir = "pytes/"
+
+[author]
+name = "Meet"
+email = "meet@gmail.com"
+twitter_username = "meetgor21"
+github_username = "mr-destructive"
+blog_link = "meetgor.com"
+
+[templates]
+post_template = "templates/post.html"
+feed_template = "templates/feed.html"

@@ -5,9 +5,14 @@ import socketserver
 
 import frontmatter
 import markdown
+import tomli
 
 from pathlib import Path
 
+def load_config(file_path: str) -> dict:
+    with open(file_path, mode='rb') as f:
+        config_file = tomli.load(f)
+    return config_file
 
 def runserver(path: str):
     PORT = 8000
@@ -39,10 +44,10 @@ def load_pages(pages_path, output_dir):
                 f.write(html_content)
     return pages
 
-
 def main():
-    pages_dir = Path("pages")
-    output_dir = os.path.abspath("pyites")
+    config = load_config("pages.toml")
+    pages_dir = Path(config["pages"]["pages_dir"])
+    output_dir = os.path.abspath(config["outputs"]["output_dir"])
 
     load_pages(pages_dir, output_dir)
     runserver(output_dir)
