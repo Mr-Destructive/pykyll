@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ site_name }}</title>
+    </head>
+    <body>
+        <h1>{{ site_name }}</h1>
+        <article>
+            <ul>
+            {% for post in posts %}
+                <li>
+                    <h2><a href="/{{ post['title'] }}.html">{{ post["title"] }}</a></h2>
+                </li>
+            {% endfor %}
+            </ul>
+        </article>
+    </body>
+</html>

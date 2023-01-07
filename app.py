@@ -3,11 +3,13 @@ import http.server
 import os
 import socketserver
 
+from jinja2 import Template
+from pathlib import Path
+
 import frontmatter
 import markdown
 import tomli
 
-from pathlib import Path
 
 def load_config(file_path: str) -> dict:
     with open(file_path, mode='rb') as f:
@@ -24,6 +26,21 @@ def runserver(path: str):
         except KeyboardInterrupt as _:
             httpd.server_close()
 
+def render_template(post: frontmatter.Post, title: str, html_content: str, config: dict):
+    default_file = str(post.get("title", title)) + ".html"
+
+    with open(config["templates"]["post_template"]) as f:
+        template = Template(f.read())
+
+    post_html = template.render(
+        title=title,
+        author=config["author"]["name"],
+        user_blog=config["author"]["blog_link"],
+        content=html_content,
+    )
+    with open(Path(config["outputs"]["output_dir"]) / default_file, "w") as f:
+        f.write(post_html)
+
 def load_pages(pages_path, output_dir):
     onlyfiles = os.listdir(pages_path)
     pages = []
@@ -38,18 +55,31 @@ def load_pages(pages_path, output_dir):
             title = str(post.get("title", default_title)) + ".html"
             post["title"] = title
             pages.append(post)
-            with open(Path(output_dir) / "index.html", "a") as f:
-                f.write(f"<li><a href='#'>{post.get('title', 'test')}</a></li>")
-            with open(Path(output_dir) / title, "w") as f:
-                f.write(html_content)
+            #with open(Path(output_dir) / "index.html", "a") as f:
+            #    f.write(f"<li><a href='#'>{post.get('title', 'test')}</a></li>")
+            config = load_config("pages.toml")
+            render_template(post, title, html_content, config) 
     return pages
+
+def load_feed(config: dict, posts: list):
+
+    with open(config["templates"]["feed_template"]) as f:
+        template = Template(f.read())
+
+    feed_html = template.render(
+        site_name=config["pages"]["site_name"],
+        posts=posts,
+    )
+    with open(Path(config["outputs"]["output_dir"]) / "index.html", "w") as f:
+        f.write(feed_html)
 
 def main():
     config = load_config("pages.toml")
     pages_dir = Path(config["pages"]["pages_dir"])
     output_dir = os.path.abspath(config["outputs"]["output_dir"])
 
-    load_pages(pages_dir, output_dir)
+    posts = load_pages(pages_dir, output_dir)
+    load_feed(config, posts)
     runserver(output_dir)
 
 main()
