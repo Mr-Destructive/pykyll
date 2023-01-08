@@ -5,11 +5,15 @@ import socketserver
 
 from jinja2 import Template
 from pathlib import Path
+from slugify import slugify
 
 import frontmatter
 import markdown
 import tomli
 
+
+class PykyllTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
 
 def load_config(file_path: str) -> dict:
     with open(file_path, mode='rb') as f:
@@ -19,7 +23,7 @@ def load_config(file_path: str) -> dict:
 def runserver(path: str):
     PORT = 8000
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=path)
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
+    with PykyllTCPServer(("", PORT), handler) as httpd:
         try:
             print("Server started at localhost:" + str(PORT))
             httpd.serve_forever()
@@ -27,7 +31,7 @@ def runserver(path: str):
             httpd.server_close()
 
 def render_template(post: frontmatter.Post, title: str, html_content: str, config: dict):
-    default_file = str(post.get("title", title)) + ".html"
+    slug = post.get("slug")
 
     with open(config["templates"]["post_template"]) as f:
         template = Template(f.read())
@@ -38,7 +42,7 @@ def render_template(post: frontmatter.Post, title: str, html_content: str, confi
         user_blog=config["author"]["blog_link"],
         content=html_content,
     )
-    with open(Path(config["outputs"]["output_dir"]) / default_file, "w") as f:
+    with open(Path(config["outputs"]["output_dir"]) / (slug + ".html"), "w") as f:
         f.write(post_html)
 
 def load_pages(pages_path, output_dir):
@@ -48,15 +52,14 @@ def load_pages(pages_path, output_dir):
         with open(Path(pages_path) / file, "r") as f:
             content = f.read()
             post = frontmatter.loads(content)
-            html_content = markdown.markdown(post.content)
+            html_content = markdown.markdown(post.content, extensions=["fenced_code"],)
             if not os.path.exists(output_dir):
                 os.mkdir(output_dir)
             default_title = file.split(".")[0]
-            title = str(post.get("title", default_title)) + ".html"
+            title = str(post.get("title", default_title))
             post["title"] = title
+            post["slug"] = slugify(str(post.get("title", title)))
             pages.append(post)
-            #with open(Path(output_dir) / "index.html", "a") as f:
-            #    f.write(f"<li><a href='#'>{post.get('title', 'test')}</a></li>")
             config = load_config("pages.toml")
             render_template(post, title, html_content, config) 
     return pages
