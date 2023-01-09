@@ -44,6 +44,8 @@ def render_template(post: frontmatter.Post, title: str, html_content: str, confi
         site_name=config["pages"]["site_name"],
         content=html_content,
     )
+    post_html = post_html.replace("<pre class=", "<div class='highlight'><pre class=")
+    post_html = post_html.replace("</pre>", "</pre></div>")
     with open(Path(config["outputs"]["output_dir"]) / (slug + ".html"), "w") as f:
         f.write(post_html)
 
