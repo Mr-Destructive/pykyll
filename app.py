@@ -1,6 +1,7 @@
 import functools
 import http.server
 import os
+import shutil
 import socketserver
 
 from jinja2 import Template
@@ -40,6 +41,7 @@ def render_template(post: frontmatter.Post, title: str, html_content: str, confi
         title=title,
         author=config["author"]["name"],
         user_blog=config["author"]["blog_link"],
+        site_name=config["pages"]["site_name"],
         content=html_content,
     )
     with open(Path(config["outputs"]["output_dir"]) / (slug + ".html"), "w") as f:
@@ -52,7 +54,7 @@ def load_pages(pages_path, output_dir):
         with open(Path(pages_path) / file, "r") as f:
             content = f.read()
             post = frontmatter.loads(content)
-            html_content = markdown.markdown(post.content, extensions=["fenced_code"],)
+            html_content = markdown.markdown(post.content, extensions=['fenced_code', 'codehilite',])
             if not os.path.exists(output_dir):
                 os.mkdir(output_dir)
             default_title = file.split(".")[0]
@@ -76,6 +78,9 @@ def load_feed(config: dict, posts: list):
     with open(Path(config["outputs"]["output_dir"]) / "index.html", "w") as f:
         f.write(feed_html)
 
+def copy_static_files(output_dir: str, static_dir: str):
+    shutil.copytree(static_dir, output_dir, dirs_exist_ok=True)
+
 def main():
     config = load_config("pages.toml")
     pages_dir = Path(config["pages"]["pages_dir"])
@@ -83,6 +88,7 @@ def main():
 
     posts = load_pages(pages_dir, output_dir)
     load_feed(config, posts)
+    copy_static_files(config["outputs"]["output_dir"], "static/")
     runserver(output_dir)
 
 main()
