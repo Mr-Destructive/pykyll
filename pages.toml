@@ -1,6 +1,7 @@
 [pages]
 site_name = "Techstructive Blog"
 pages_dir = "pages/"
+description = "Tech Blog"
 
 [outputs]
 output_dir = "pytes/"
