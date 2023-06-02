@@ -60,6 +60,7 @@ def render_template(post: frontmatter.Post, title: str, html_content: str, confi
 def load_pages(pages_path, output_dir):
     onlyfiles = os.listdir(pages_path)
     pages = []
+    logger.info(f"Loading pages from {pages_path}")
     for file in onlyfiles:
         with open(Path(pages_path) / file, "r") as f:
             content = f.read()
@@ -78,7 +79,7 @@ def load_pages(pages_path, output_dir):
     return pages
 
 
-def load_feed(config: dict, posts: list):
+def load_feed(config: dict, posts: list, feed_type: str):
 
     with open(config["templates"]["feed_template"]) as f:
         template = Template(f.read())
@@ -87,12 +88,15 @@ def load_feed(config: dict, posts: list):
         site_name=config["pages"]["site_name"],
         posts=posts,
     )
-    with open(Path(config["outputs"]["output_dir"]) / "index.html", "w") as f:
+    
+    output_dir = Path(config["outputs"]["output_dir"])
+    with open(output_dir / feed_type /  "index.html", "w") as f:
         f.write(feed_html)
 
 
-def copy_static_files(output_dir: str, static_dir: str):
+def copy_static_files(output_dir: str, feed: str, static_dir: str):
     shutil.copytree(static_dir, output_dir, dirs_exist_ok=True)
+    shutil.copytree(static_dir, Path(output_dir)/feed, dirs_exist_ok=True)
 
 
 def main():
@@ -100,10 +104,18 @@ def main():
     pages_dir = Path(config["pages"]["pages_dir"])
     output_dir = os.path.abspath(config["outputs"]["output_dir"])
 
-    posts = load_pages(pages_dir, output_dir)
-    load_feed(config, posts)
-    copy_static_files(config["outputs"]["output_dir"], "static/")
-    generate_rss()
+    for feed_type in config["feed_types"]:
+        pages_dir = Path(config["pages"]["pages_dir"])
+        feeds_dir = pages_dir / feed_type
+
+        if not os.path.exists(Path(output_dir)):
+            os.mkdir(Path(output_dir) )
+        if not os.path.exists(Path(output_dir) / feed_type):
+            os.mkdir(Path(output_dir) / feed_type)
+        posts = load_pages(feeds_dir, output_dir)
+        load_feed(config, posts, feed_type)
+        copy_static_files(config["outputs"]["output_dir"], feed_type, "static/")
+        generate_rss()
     runserver(output_dir)
 
 

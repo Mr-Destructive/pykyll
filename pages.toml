@@ -3,6 +3,10 @@ site_name = "Techstructive Blog"
 pages_dir = "pages/"
 description = "Tech Blog"
 
+[feed_types]
+blog = "blog"
+dev_journal = "journal"
+
 [outputs]
 output_dir = "pytes/"
 
